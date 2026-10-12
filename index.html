@@ -63,6 +63,7 @@
             font-family: 'Orbitron', sans-serif; transition: all 0.3s; text-transform: uppercase;
         }
         .btn:hover { background: #059669; box-shadow: var(--accent-glow); transform: translateY(-2px); }
+        .btn:disabled { background: #475569; cursor: not-allowed; box-shadow: none; color: #94a3b8;}
         .error-msg { background: rgba(239, 68, 68, 0.1); border: 1px solid var(--danger); color: #fca5a5; font-size: 0.85rem; margin-top: 15px; padding: 10px; border-radius: 6px; display: none; line-height: 1.5; }
 
         /* DASHBOARD */
@@ -82,7 +83,6 @@
         .mission-header { display: flex; align-items: center; gap: 10px; margin-bottom: 15px; border-bottom: 1px solid #334155; padding-bottom: 10px; }
         .mission-header h2 { font-size: 1.2rem; color: white; }
         
-        /* Member Row */
         .member-row {
             display: grid; grid-template-columns: 2fr 1fr 2fr; gap: 10px; align-items: start;
             background: rgba(15, 23, 42, 0.5); padding: 15px; border-radius: 6px; margin-bottom: 10px;
@@ -91,9 +91,7 @@
         @media (max-width: 600px) { .member-row { grid-template-columns: 1fr; } }
         
         .file-upload-wrapper { position: relative; overflow: hidden; display: inline-block; width: 100%; }
-        .file-upload-wrapper input[type=file] {
-            font-size: 0.8rem; background: #334155; padding: 8px; border-radius: 4px; border:none; cursor: pointer; color: white; width:100%;
-        }
+        .file-upload-wrapper input[type=file] { font-size: 0.8rem; background: #334155; padding: 8px; border-radius: 4px; border:none; cursor: pointer; color: white; width:100%; }
 
         .case-briefing { background: #0f172a; padding: 15px; border-radius: 6px; border: 1px dashed #475569; margin-bottom: 20px; line-height: 1.6; }
         .case-briefing h4 { color: var(--warning); margin-bottom: 10px; font-family: 'Orbitron', sans-serif; }
@@ -126,7 +124,8 @@
                 <label>Kata Sandi Rahasia</label>
                 <input type="password" id="password" placeholder="Masukkan sandi">
             </div>
-            <button class="btn" onclick="login()">Masuk Sistem</button>
+            <button class="btn" id="btn-login" onclick="login()">Menghubungkan ke Server...</button>
+            <p style="font-size: 0.75rem; color: var(--warning); margin-top: 10px;" id="db-status">Sinkronisasi Database Murid...</p>
             <div class="error-msg" id="login-error"></div>
         </div>
 
@@ -149,10 +148,7 @@
                         <h2>Misi 1: Laporan Bukti Nilai SakuVet</h2>
                     </div>
                     <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 15px;">Pilih nama murid (Maks. 4 Anggota), masukkan nilai akhir kuis, dan unggah bukti *screenshot*-nya.</p>
-                    
-                    <div id="members-container">
-                        <!-- Baris Input Anggota akan di-generate oleh JavaScript sesuai kelas -->
-                    </div>
+                    <div id="members-container"></div>
                 </div>
 
                 <!-- MISI 2 -->
@@ -194,8 +190,6 @@
                         <h2>Misi 3: Transmisi Reportase (Video)</h2>
                     </div>
                     <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 10px;">Anda telah memecahkan kasusnya! Sekarang publikasikan penemuan Anda.</p>
-                    
-                    <!-- PETUNJUK PRAKTIS -->
                     <ol class="instruction-list">
                         <li><b>Bagi Peran:</b> 1 Murid menjadi Reporter Berita, 1 Murid menjadi Dokter Hewan Ahli, sisanya menjadi Peternak/Kameramen.</li>
                         <li><b>Tulis Naskah:</b> Susun narasi singkat berdasarkan jawaban Misi 2 Anda. Jangan kaku, gunakan bahasa yang komunikatif dan meyakinkan.</li>
@@ -203,7 +197,6 @@
                         <li><b>Unggah Video:</b> Upload video tersebut ke Google Drive salah satu anggota / YouTube / Instagram.</li>
                         <li><b>Bagikan Tautan:</b> Pastikan hak akses video di Google Drive disetting ke <b>"Siapa saja yang memiliki link"</b> (Viewer). Tempelkan link tersebut di bawah.</li>
                     </ol>
-
                     <div class="input-group" style="margin-bottom: 0;">
                         <label>Tautan (Link) Video Reportase Final</label>
                         <input type="url" id="videoLink" placeholder="Salin link Google Drive / YouTube di sini..." required>
@@ -217,8 +210,8 @@
 
     <div id="loading">
         <div class="spinner"></div>
-        <h2 style="font-size:1.2rem; margin-bottom: 10px;">MENGUNGGAH BUKTI & MENGIRIM DATA...</h2>
-        <p style="font-size:0.9rem; color:#cbd5e1;">Proses kompresi gambar dan enkripsi data sedang berjalan. Mohon tunggu dan jangan tutup halaman ini.</p>
+        <h2 style="font-size:1.2rem; margin-bottom: 10px;" id="loading-title">MENGUNGGAH BUKTI & MENGIRIM DATA...</h2>
+        <p style="font-size:0.9rem; color:#cbd5e1;" id="loading-desc">Proses kompresi gambar dan enkripsi data sedang berjalan. Mohon tunggu dan jangan tutup halaman ini.</p>
     </div>
 
     <script>
@@ -226,83 +219,34 @@
         // 1. KONFIGURASI SISTEM
         // ==========================================
         
-        // MASUKKAN URL WEB APP GOOGLE APPS SCRIPT ANDA DI SINI
-        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbydBeI32fSr7dJiXfVo8iWKmbIwMzEVG3kLaSjA0VUDsTZ4cW0SSucocpQGcrw5nvO06Q/exec"; 
+        // MASUKKAN URL WEB APP GOOGLE APPS SCRIPT ANDA DI SINI (WAJIB DIISI AGAR DATABASE NAMA TERBACA)
+        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycby00m1F3I3hbtLSxF8u4sahYJdlrPbwZ_n6DJYElTn4cGbfPHZbSEeIrd8c9-fEzlcPKg/exec"; 
 
-        // Database Murid (Telah diperbaiki strukturnya)
-        const studentDB = {
-            "XI AT 1": [
-                "Pilih Nama Murid...", "Ade Ersza Maulana", "Ainun Barokah", "Andriyan Refano", "Anisa Febrianti", 
-                "Azah Nurfaiqoh", "Azas Senja Darmawan", "Erwin Setiawan", "Fakhri Ramadhan", "Fatma Atania", 
-                "Firdausy", "Hikmah Zahra Aliffana", "Ibrahim Al Akbar", "Imam Nur Hidayat", "Iqbal Sabri Romadhon", 
-                "Ismi Fatikhatul Laila", "Karendra Rifqi Maulana", "Lika Meriana Sabili", "Mauliddya Zulfa Akmala", 
-                "Muhamad Mahbub Mufafa", "Naufal Atha Zahran", "Penti Ayuningtiyas", "Raif Langit Ramadhan", 
-                "Randi Ahmad Saputra", "Raya Bhikha Mahendra", "Restu Istiqomah", "Riki Maulana Saputra", 
-                "Semrio Oktaviano", "Sibti Alfiana", "Sidiq Nur Ardianto", "Sri Mulyani Indrawati", "Syfa Ramadani", 
-                "Tiara Eliasari", "Tri Wahyu Setianingsih", "Ulul Janah", "Vario Mualim", "Zaenal Bahtiar"
-            ],
-            "XI AT 2": [
-                "Pilih Nama Murid...", "Aditya Chesta Helga Pratama", "Aisyah Dwi Nuraini", "Anjar Banyu Imam Subekti", 
-                "Annisa Meilani", "Bella Zahrina Aprila", "Caesar Alvirzi Setiawan", "Clarisa Chika Welby Alvaro", 
-                "Eti Nurlela", "Eza Fariza Ghofur", "Febrian Haerullah", "Frananda Valen Pramudya", "Hanum Nur Lathifah", 
-                "Icha Ganis Oktavia", "Ihsyan Samsul Ma`Arif", "Ipung Rizki Yanuar", "Irgi Ardianto", "Keza Nabila", 
-                "Khafidz Wahyudin", "Malinda Maheswary", "Muhammad Imami Zaki Al Kindi", "Noval Agung Pramudia", 
-                "Nur Novitasari", "Qory Widiyana", "Raihan Anang Syahputra", "Randy Gustiantoro", "Rayhan Syah Putra", 
-                "Regina Saputri", "Ruknul Anam", "Sahrotun Nisa Urohmah", "Sendi Yuyun Permana", "Silvi Wulandhari", 
-                "Sylvia Rahma Safitri", "Tegar Dwi Surya", "Wiwit Agustyaningrum", "Yoga Panca Saputra"
-            ],
-            "XI AT 3": [
-                "Pilih Nama Murid...", "Alif Maulid Fadlika", "Arya Giovani", "Asna Muzayanah Subekti", "Damar Aji Wiguna", 
-                "Dimas Wahyu Aryaguna", "Elsi Nur Hamidah", "Erin Jelita Maharani", "Faata Afza Nurina", "Fadlan Dhiaurrohman", 
-                "Fino Damar Saputra", "Hafiedz Danur Aditya", "Hanna Vakihatun Sholehah", "Helina Ananda Saputri", 
-                "Ihzanul Habibah Triwahyuni", "Ikhwan Tri Rejeki", "Iqbal Ramadani", "Irsyad Achnafulloh", "Kireyna Sasi Muannisa", 
-                "Malik", "Matahari Selfiana Putri", "Muhammad Faiz Pratama", "Nadia Dwi Anjani", "Putri Finza", 
-                "Radhiya Fara Dewantari", "Ragil Setiawan", "Ramdani Ardiansyah", "Rasya Dwi Mulyana", "Reza Nur Aiman", 
-                "Satria Bagas Saputra", "Septian Prisnanda", "Shofa Kamalia Lahfah", "Silviana Dwi Safitri", "Syifa Triana", 
-                "Tri Aksa Fergiansah", "Tuti Julianti", "Yusuf Ardiyansyah"
-            ]
+        // Placeholder kosong, akan diisi otomatis dari Spreadsheet
+        let studentDB = {
+            "XI AT 1": ["Memuat Database..."],
+            "XI AT 2": ["Memuat Database..."],
+            "XI AT 3": ["Memuat Database..."]
         };
-        
-        // Database User Login
+
         const userDB = {
-            // XI AT 1 (Prefix: a)
             "akelompok1": { pass: "1athebat", class: "XI AT 1", caseId: 1, name: "XI AT 1 - Tim Elba (Kel. 1)" },
             "akelompok2": { pass: "2athebat", class: "XI AT 1", caseId: 2, name: "XI AT 1 - Tim Bravo (Kel. 2)" },
             "akelompok3": { pass: "3athebat", class: "XI AT 1", caseId: 3, name: "XI AT 1 - Tim Layer (Kel. 3)" },
             "akelompok4": { pass: "4athebat", class: "XI AT 1", caseId: 4, name: "XI AT 1 - Tim Broiler (Kel. 4)" },
-            "akelompok5": { pass: "5athebat", class: "XI AT 1", caseId: 5, name: "XI AT 1 - Tim Loghman (Kel. 5)" },
-            "akelompok6": { pass: "6athebat", class: "XI AT 1", caseId: 6, name: "XI AT 1 - Tim KUB (Kel. 6)" },
-            "akelompok7": { pass: "7athebat", class: "XI AT 1", caseId: 7, name: "XI AT 1 - Tim Bekisar (Kel. 7)" },
-            "akelompok8": { pass: "8athebat", class: "XI AT 1", caseId: 8, name: "XI AT 1 - Tim Cemani (Kel. 8)" },
-            "akelompok9": { pass: "9athebat", class: "XI AT 1", caseId: 9, name: "XI AT 1 - Tim Kedu (Kel. 9)" },
-            "akelompok10":{ pass: "10athebat", class: "XI AT 1", caseId: 10, name: "XI AT 1 - Tim Setul (Kel. 10)" },
-            
-            // XI AT 2 (Prefix: b)
+            "akelompok5": { pass: "5athebat", class: "XI AT 1", caseId: 5, name: "XI AT 1 - Tim KUB (Kel. 5)" },
             "bkelompok1": { pass: "1athebat", class: "XI AT 2", caseId: 6, name: "XI AT 2 - Tim Elba (Kel. 1)" },
             "bkelompok2": { pass: "2athebat", class: "XI AT 2", caseId: 7, name: "XI AT 2 - Tim Bravo (Kel. 2)" },
             "bkelompok3": { pass: "3athebat", class: "XI AT 2", caseId: 8, name: "XI AT 2 - Tim Layer (Kel. 3)" },
             "bkelompok4": { pass: "4athebat", class: "XI AT 2", caseId: 9, name: "XI AT 2 - Tim Broiler (Kel. 4)" },
-            "bkelompok5": { pass: "5athebat", class: "XI AT 2", caseId: 10, name:"XI AT 2 - Tim Loghman (Kel. 5)" },
-            "bkelompok6": { pass: "6athebat", class: "XI AT 2", caseId: 1, name: "XI AT 2 - Tim KUB (Kel. 6)" },
-            "bkelompok7": { pass: "7athebat", class: "XI AT 2", caseId: 2, name: "XI AT 2 - Tim Bekisar (Kel. 7)" },
-            "bkelompok8": { pass: "8athebat", class: "XI AT 2", caseId: 3, name: "XI AT 2 - Tim Cemani (Kel. 8)" },
-            "bkelompok9": { pass: "9athebat", class: "XI AT 2", caseId: 4, name: "XI AT 2 - Tim Kedu (Kel. 9)" },
-            "bkelompok10":{ pass: "10athebat", class: "XI AT 2", caseId: 5, name: "XI AT 2 - Tim Setul (Kel. 10)" },
-            
-            // XI AT 3 (Prefix: c)
+            "bkelompok5": { pass: "5athebat", class: "XI AT 2", caseId: 10, name:"XI AT 2 - Tim KUB (Kel. 5)" },
             "ckelompok1": { pass: "1athebat", class: "XI AT 3", caseId: 1, name: "XI AT 3 - Tim Elba (Kel. 1)" },
             "ckelompok2": { pass: "2athebat", class: "XI AT 3", caseId: 2, name: "XI AT 3 - Tim Bravo (Kel. 2)" },
             "ckelompok3": { pass: "3athebat", class: "XI AT 3", caseId: 3, name: "XI AT 3 - Tim Layer (Kel. 3)" },
             "ckelompok4": { pass: "4athebat", class: "XI AT 3", caseId: 4, name: "XI AT 3 - Tim Broiler (Kel. 4)" },
-            "ckelompok5": { pass: "5athebat", class: "XI AT 3", caseId: 5, name: "XI AT 3 - Tim Loghman (Kel. 5)" },
-            "ckelompok6": { pass: "6athebat", class: "XI AT 3", caseId: 6, name: "XI AT 3 - Tim KUB (Kel. 6)" },
-            "ckelompok7": { pass: "7athebat", class: "XI AT 3", caseId: 7, name: "XI AT 3 - Tim Bekisar (Kel. 7)" },
-            "ckelompok8": { pass: "8athebat", class: "XI AT 3", caseId: 8, name: "XI AT 3 - Tim Cemani (Kel. 8)" },
-            "ckelompok9": { pass: "9athebat", class: "XI AT 3", caseId: 9, name: "XI AT 3 - Tim Kedu (Kel. 9)" },
-            "ckelompok10":{ pass: "10athebat", class: "XI AT 3", caseId: 10, name: "XI AT 3 - Tim Setul (Kel. 10)" }
+            "ckelompok5": { pass: "5athebat", class: "XI AT 3", caseId: 5, name: "XI AT 3 - Tim KUB (Kel. 5)" },
         };
 
-        // Database Kasus Super HOTS (Level Analisis Ekstra)
         const caseDB = {
             1: { title: "Kasus #01: Misteri Lendir & Dinding Sel", desc: "Ayam ngorok parah dan kantung udara keruh. Pak Budi mendiagnosisnya sebagai infeksi bakteri pernapasan dan menyuntikkan Amoxicillin (gol. Penisilin) selama seminggu penuh. Namun, 100% ayam tidak ada yang sembuh. Mengapa secara farmakologis obat ini gagal total?" },
             2: { title: "Kasus #02: Dilema Hijau & Klorin", desc: "Populasi layer menunjukkan gejala sayap lumpuh, leher terpelintir, dan diare hijau lumut. Pendarahan lambung ditemukan. Peternak panik, lalu memberikan Amoxicillin dan menaburkan Klorin (kaporit) dosis tinggi ke toren air agar kuman mati. Keesokan harinya ia memvaksin booster ND via air minum tersebut. Apa kesalahan fatal beruntun ini?" },
@@ -319,15 +263,52 @@
         let currentGroup = "";
         let currentClass = "";
         let currentCaseId = 0;
-        let base64Files = {}; // Menyimpan data gambar sementara
+        let base64Files = {}; 
 
         // ==========================================
-        // 2. FUNGSI LOGIKA SISTEM
+        // 2. FETCH DATABASE MURID ON LOAD
         // ==========================================
+        window.onload = function() {
+            const btnLogin = document.getElementById('btn-login');
+            const dbStatus = document.getElementById('db-status');
+            
+            if(GOOGLE_SCRIPT_URL === "") {
+                btnLogin.innerText = "Masuk Sistem (Mode Simulasi)";
+                dbStatus.innerText = "URL Script kosong, menggunakan Mode Simulasi.";
+                studentDB = {
+                    "XI AT 1": ["Pilih Nama Murid...", "Siswa A (Simulasi)", "Siswa B (Simulasi)"],
+                    "XI AT 2": ["Pilih Nama Murid...", "Siswa C (Simulasi)", "Siswa D (Simulasi)"],
+                    "XI AT 3": ["Pilih Nama Murid...", "Siswa E (Simulasi)", "Siswa F (Simulasi)"]
+                };
+                btnLogin.disabled = false;
+                return;
+            }
+
+            btnLogin.disabled = true; // Kunci tombol saat menyedot data
+            
+            fetch(GOOGLE_SCRIPT_URL)
+            .then(res => res.json())
+            .then(data => {
+                if(!data.error) {
+                    studentDB = data;
+                    dbStatus.innerText = "✅ Database murid berhasil disinkronkan!";
+                    dbStatus.style.color = "var(--accent-green)";
+                    btnLogin.innerText = "Masuk Sistem";
+                    btnLogin.disabled = false;
+                } else {
+                    throw new Error(data.error);
+                }
+            })
+            .catch(err => {
+                dbStatus.innerText = "⚠️ Gagal menyinkronkan data murid. Pastikan URL Script benar.";
+                dbStatus.style.color = "var(--danger)";
+                btnLogin.innerText = "Gagal Terhubung";
+            });
+        };
 
         function login() {
             const user = document.getElementById('username').value.toLowerCase().replace(/\s+/g, '');
-            const pass = document.getElementById('password').value.replace(/\s+/g, '');
+            const pass = document.getElementById('password').value.toLowerCase().replace(/\s+/g, '');
             const errorMsg = document.getElementById('login-error');
 
             if (userDB[user] && userDB[user].pass === pass) {
@@ -335,12 +316,11 @@
                 currentClass = userDB[user].class;
                 currentCaseId = userDB[user].caseId;
                 
-                // Set UI Dashboard
                 document.getElementById('group-name-display').innerText = currentGroup;
                 document.getElementById('case-title').innerText = caseDB[currentCaseId].title;
                 document.getElementById('case-description').innerText = caseDB[currentCaseId].desc;
                 
-                generateMemberRows(currentClass); // Munculkan dropdown nama sesuai kelas
+                generateMemberRows(currentClass); 
                 
                 document.getElementById('login-screen').style.display = 'none';
                 document.getElementById('dashboard-screen').style.display = 'block';
@@ -352,13 +332,12 @@
         }
 
         function logout() {
-            location.reload(); // Refresh halaman untuk membersihkan semua data cache
+            location.reload(); 
         }
 
-        // Generate Dropdown Murid
         function generateMemberRows(className) {
             const container = document.getElementById('members-container');
-            const students = studentDB[className] || ["Pilih Nama Murid...", "Siswa 1", "Siswa 2"];
+            const students = studentDB[className] || ["Pilih Nama Murid..."];
             let optionsHTML = "";
             students.forEach(name => { optionsHTML += `<option value="${name}">${name}</option>`; });
 
@@ -386,9 +365,6 @@
             container.innerHTML = html;
         }
 
-        // ==========================================
-        // 3. FITUR KOMPRESI GAMBAR OTOMATIS (CANVAS)
-        // ==========================================
         function compressImage(event, index) {
             const file = event.target.files[0];
             if (!file) return;
@@ -401,8 +377,6 @@
                 img.onload = function() {
                     const canvas = document.createElement('canvas');
                     const ctx = canvas.getContext('2d');
-                    
-                    // Maksimal lebar/tinggi gambar 800px agar ringan dikirim
                     const MAX_SIZE = 800;
                     let width = img.width;
                     let height = img.height;
@@ -417,7 +391,6 @@
                     canvas.height = height;
                     ctx.drawImage(img, 0, 0, width, height);
                     
-                    // Konversi ke base64 dengan kompresi kualitas 60%
                     const base64String = canvas.toDataURL('image/jpeg', 0.6).split(',')[1];
                     
                     base64Files["file" + index] = {
@@ -431,13 +404,9 @@
             }
         }
 
-        // ==========================================
-        // 4. PENGIRIMAN DATA KE SERVER
-        // ==========================================
         document.getElementById('investigation-form').addEventListener('submit', function(e) {
             e.preventDefault();
             
-            // Validasi nama tidak boleh default
             for(let i=1; i<=4; i++) {
                 let nama = document.getElementById(`nama${i}`).value;
                 if(nama === "Pilih Nama Murid..." && document.getElementById(`nilai${i}`).value !== "") {
@@ -481,7 +450,6 @@
                 return;
             }
 
-            // Kirim menggunakan metode JSON text/plain agar tidak terkena blokir CORS
             fetch(GOOGLE_SCRIPT_URL, {
                 method: 'POST',
                 headers: { 'Content-Type': 'text/plain;charset=utf-8' },
