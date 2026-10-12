@@ -105,7 +105,19 @@
             letter-spacing: 1px;
         }
         .btn:hover { background: #059669; box-shadow: var(--accent-glow); transform: translateY(-2px); }
-        .error-msg { color: var(--danger); font-size: 0.85rem; margin-top: 10px; display: none; }
+        
+        /* Error Message Box */
+        .error-msg { 
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid var(--danger);
+            color: #fca5a5; 
+            font-size: 0.85rem; 
+            margin-top: 15px; 
+            padding: 10px;
+            border-radius: 6px;
+            display: none; 
+            line-height: 1.5;
+        }
 
         /* DASHBOARD SCREEN */
         #dashboard-screen { display: none; width: 100%; }
@@ -184,7 +196,7 @@
                 <input type="password" id="password" placeholder="Masukkan sandi">
             </div>
             <button class="btn" onclick="login()">Masuk Sistem</button>
-            <p class="error-msg" id="login-error">Akses Ditolak! Username atau sandi salah.</p>
+            <div class="error-msg" id="login-error"></div>
         </div>
 
         <!-- DASHBOARD SCREEN -->
@@ -198,7 +210,6 @@
             </div>
 
             <form id="investigation-form">
-                
                 <!-- MISI 1 -->
                 <div class="mission-box">
                     <div class="mission-header">
@@ -221,7 +232,6 @@
                         <h2>Misi 2: Analisis Rekam Medis (Kasus Misterius)</h2>
                     </div>
                     
-                    <!-- DYNAMIC CASE BRIEFING -->
                     <div class="case-briefing">
                         <h4 id="case-title">Loading...</h4>
                         <p id="case-description" style="font-size: 0.95rem;"></p>
@@ -274,14 +284,9 @@
     </div>
 
     <script>
-        // ==========================================
-        // KONFIGURASI SISTEM
-        // ==========================================
-        
-        // GANTI STRING KOSONG DI BAWAH INI DENGAN URL WEB APP GOOGLE APPS SCRIPT ANDA
-        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzg02P_k_Pt-yNjtwV2amZpfaMHlNfFXQ8-F-32HlRGDGohNqOlhOhZifqq_yiL4H0Nrw/exec"; 
+        const GOOGLE_SCRIPT_URL = ""; 
 
-        // Database Murid (Username HANYA MENGGUNAKAN HURUF KECIL untuk mencegah error)
+        // Database Murid 
         const userDB = {
             // KELAS A
             "akelompok1": { pass: "1athebat", caseId: 1, name: "Kelas A - Tim Elba (Kelompok 1)" },
@@ -320,59 +325,26 @@
             "ckelompok10":{ pass: "10athebat", caseId: 10, name: "Kelas C - Tim Setul (Kelompok 10)" }
         };
 
-        // Database Kasus Misterius
         const caseDB = {
-            1: {
-                title: "Kasus #01: Layer 'Maju Makmur'",
-                desc: "Populasi 5.000 ekor layer turun produksi drastis. Gejala: ayam lumpuh sayap, feses hijau royo-royo, leher terpelintir (torticollis). Nekropsi: pendarahan pada proventrikulus. Peternak mengaku lupa jadwal vaksin booster bulan lalu."
-            },
-            2: {
-                title: "Kasus #02: Broiler 'Bintang Mandiri'",
-                desc: "Broiler umur 21 hari mati puluhan ekor/hari. Gejala: lesu, menggigil kedinginan, area kloaka kotor oleh feses lengket putih kapur, ayam saling patuk kloaka. Nekropsi: Bursa Fabricius bengkak & berdarah. Masa istirahat kandang sebelumnya hanya 3 hari."
-            },
-            3: {
-                title: "Kasus #03: Ayam KUB 'Berkah Farm'",
-                desc: "Hujan seminggu penuh. Kandang bau amonia menyengat. Gejala: ayam bersin, wajah (sinus) bengkak parah hingga mata tertutup, keluar lendir sangat busuk dari hidung. Nekropsi: eksudat perkejuan di rongga hidung. Sekam (litter) dibiarkan basah menggumpal."
-            },
-            4: {
-                title: "Kasus #04: Broiler Kemitraan (Closed-House)",
-                desc: "Umur 28 hari makan menurun. Gejala malam hari: ngorok basah bersahutan, gelembung air kecil (bubbles) di sudut mata. Wajah TIDAK bengkak. Nekropsi: kantung udara (air sac) keruh/berbusa. Kipas exhaust sempat mati beberapa hari (sirkulasi buruk)."
-            },
-            5: {
-                title: "Kasus #05: Broiler 'Suka Maju' (Fase Kritis)",
-                desc: "Lanjutan dari penyakit ngorok yang tak diobati. Gejala: ayam sangat kerdil, bulu berdiri kusam, mati lemas. Nekropsi: jantung dan hati ayam tertutup selaput tebal putih kekuningan (fibrin). Fakta: Toren air minum tak pernah dikuras & berlumut tebal."
-            },
-            6: {
-                title: "Kasus #06: Layer 'Tunas Harapan' (Misteri Obat)",
-                desc: "Ayam mengalami ngorok dan kantung udara keruh. Peternak memborong dan mencekoki ayam dengan antibiotik golongan Penisilin (Amoxicillin) selama 5 hari. Hasilnya: nol besar, penyakit makin parah. Mengapa obat mahal ini gagal total?"
-            },
-            7: {
-                title: "Kasus #07: Broiler 'Sentosa' (Tragedi Suntik)",
-                desc: "Ayam umur 18 hari terserang diare putih kapur & bursa fabricius bengkak. Peternak panik dan menyuntik seluruh populasi dengan antibiotik keras dosis tinggi (Enrofloxacin). Besoknya, kematian meledak drastis akibat ginjal hancur. Evaluasi kejadian ini!"
-            },
-            8: {
-                title: "Kasus #08: Ayam Petelur (Pancaroba)",
-                desc: "Dua bulan lalu, peternakan ini sukses mengobati wabah Snot (wajah bengkak, hidung busuk). Saat cuaca ekstrem (pancaroba) tiba, wabah Snot meledak lagi secara massal di kandang yang sama meski biosekuriti ketat. Tidak ada vitamin antistres diberikan. Jelaskan fenomena ini!"
-            },
-            9: {
-                title: "Kasus #09: Penetasan DOC 'Bibit Unggul'",
-                desc: "DOC baru menetas wajib divaksin perdana untuk mencegah Tetelo (saraf). Seorang anak magang ingin mencampur vaksin ke air minum agar cepat. Namun Manajer melarang keras dan mewajibkan metode tetes mata (intraocular) untuk DOC. Apa alasan medis spesifik Manajer tersebut?"
-            },
-            10: {
-                title: "Kasus #10: Pullet 'Sehat Selalu' (Vaksinasi Massal)",
-                desc: "Ayam dara (10 minggu) divaksin massal via toren air. Pekerja menggunakan air sumur yang baru saja diberi kaporit, langsung mencemplungkan vial vaksin aktif dan mengaduknya tanpa menambahkan susu skim/stabilisator. Hasilnya: Vaksinasi gagal. Mengapa?"
-            }
+            1: { title: "Kasus #01: Layer 'Maju Makmur'", desc: "Populasi 5.000 ekor layer turun produksi drastis. Gejala: ayam lumpuh sayap, feses hijau royo-royo, leher terpelintir (torticollis). Nekropsi: pendarahan pada proventrikulus. Peternak mengaku lupa jadwal vaksin booster bulan lalu." },
+            2: { title: "Kasus #02: Broiler 'Bintang Mandiri'", desc: "Broiler umur 21 hari mati puluhan ekor/hari. Gejala: lesu, menggigil kedinginan, area kloaka kotor oleh feses lengket putih kapur, ayam saling patuk kloaka. Nekropsi: Bursa Fabricius bengkak & berdarah. Masa istirahat kandang sebelumnya hanya 3 hari." },
+            3: { title: "Kasus #03: Ayam KUB 'Berkah Farm'", desc: "Hujan seminggu penuh. Kandang bau amonia menyengat. Gejala: ayam bersin, wajah (sinus) bengkak parah hingga mata tertutup, keluar lendir sangat busuk dari hidung. Nekropsi: eksudat perkejuan di rongga hidung. Sekam (litter) dibiarkan basah menggumpal." },
+            4: { title: "Kasus #04: Broiler Kemitraan (Closed-House)", desc: "Umur 28 hari makan menurun. Gejala malam hari: ngorok basah bersahutan, gelembung air kecil (bubbles) di sudut mata. Wajah TIDAK bengkak. Nekropsi: kantung udara (air sac) keruh/berbusa. Kipas exhaust sempat mati beberapa hari (sirkulasi buruk)." },
+            5: { title: "Kasus #05: Broiler 'Suka Maju' (Fase Kritis)", desc: "Lanjutan dari penyakit ngorok yang tak diobati. Gejala: ayam sangat kerdil, bulu berdiri kusam, mati lemas. Nekropsi: jantung dan hati ayam tertutup selaput tebal putih kekuningan (fibrin). Fakta: Toren air minum tak pernah dikuras & berlumut tebal." },
+            6: { title: "Kasus #06: Layer 'Tunas Harapan' (Misteri Obat)", desc: "Ayam mengalami ngorok dan kantung udara keruh. Peternak memborong dan mencekoki ayam dengan antibiotik golongan Penisilin (Amoxicillin) selama 5 hari. Hasilnya: nol besar, penyakit makin parah. Mengapa obat mahal ini gagal total?" },
+            7: { title: "Kasus #07: Broiler 'Sentosa' (Tragedi Suntik)", desc: "Ayam umur 18 hari terserang diare putih kapur & bursa fabricius bengkak. Peternak panik dan menyuntik seluruh populasi dengan antibiotik keras dosis tinggi (Enrofloxacin). Besoknya, kematian meledak drastis akibat ginjal hancur. Evaluasi kejadian ini!" },
+            8: { title: "Kasus #08: Ayam Petelur (Pancaroba)", desc: "Dua bulan lalu, peternakan ini sukses mengobati wabah Snot (wajah bengkak, hidung busuk). Saat cuaca ekstrem (pancaroba) tiba, wabah Snot meledak lagi secara massal di kandang yang sama meski biosekuriti ketat. Tidak ada vitamin antistres diberikan. Jelaskan fenomena ini!" },
+            9: { title: "Kasus #09: Penetasan DOC 'Bibit Unggul'", desc: "DOC baru menetas wajib divaksin perdana untuk mencegah Tetelo (saraf). Seorang anak magang ingin mencampur vaksin ke air minum agar cepat. Namun Manajer melarang keras dan mewajibkan metode tetes mata (intraocular) untuk DOC. Apa alasan medis spesifik Manajer tersebut?" },
+            10: { title: "Kasus #10: Pullet 'Sehat Selalu' (Vaksinasi Massal)", desc: "Ayam dara (10 minggu) divaksin massal via toren air. Pekerja menggunakan air sumur yang baru saja diberi kaporit, langsung mencemplungkan vial vaksin aktif dan mengaduknya tanpa menambahkan susu skim/stabilisator. Hasilnya: Vaksinasi gagal. Mengapa?" }
         };
 
         let currentGroup = "";
         let currentCaseId = 0;
 
-        // Logika Login yang SUDAH KEBAL KESALAHAN KETIK (Hapus spasi otomatis)
         function login() {
-            // .toLowerCase() mengubah semua jadi huruf kecil
-            // .replace(/\s+/g, '') menghapus semua spasi yang mungkin terketik oleh siswa
+            // Pelacak Input - merapikan spasi dan mengubah jadi huruf kecil agar kebal dari kesalahan ketik
             const user = document.getElementById('username').value.toLowerCase().replace(/\s+/g, '');
-            const pass = document.getElementById('password').value.replace(/\s+/g, '');
+            const pass = document.getElementById('password').value.toLowerCase().replace(/\s+/g, '');
             const errorMsg = document.getElementById('login-error');
 
             if (userDB[user] && userDB[user].pass === pass) {
@@ -388,6 +360,11 @@
                 document.getElementById('dashboard-screen').style.display = 'block';
                 errorMsg.style.display = 'none';
             } else {
+                // Menampilkan teks apa yang sebenarnya ditangkap oleh sistem
+                errorMsg.innerHTML = `⚠️ <b>Akses Ditolak!</b><br>
+                                      ID terbaca: <i>"${user}"</i><br>
+                                      Sandi terbaca: <i>"${pass}"</i><br>
+                                      Silakan cek kembali ketikan Anda.`;
                 errorMsg.style.display = 'block';
             }
         }
@@ -399,10 +376,8 @@
             document.getElementById('dashboard-screen').style.display = 'none';
         }
 
-        // Handle Submit Form
         document.getElementById('investigation-form').addEventListener('submit', function(e) {
             e.preventDefault();
-            
             const loading = document.getElementById('loading');
             loading.style.display = 'flex';
 
@@ -417,7 +392,6 @@
                 linkVideo: document.getElementById('videoLink').value
             });
 
-            // Jika GOOGLE_SCRIPT_URL belum diisi, jalankan simulasi sukses
             if (GOOGLE_SCRIPT_URL === "") {
                 setTimeout(() => {
                     loading.style.display = 'none';
@@ -428,11 +402,7 @@
                 return;
             }
 
-            // Kirim ke Google Apps Script
-            fetch(GOOGLE_SCRIPT_URL, {
-                method: 'POST',
-                body: payload
-            })
+            fetch(GOOGLE_SCRIPT_URL, { method: 'POST', body: payload })
             .then(res => res.json())
             .then(data => {
                 loading.style.display = 'none';
