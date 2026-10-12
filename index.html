@@ -227,12 +227,11 @@
         // ==========================================
         
         // MASUKKAN URL WEB APP GOOGLE APPS SCRIPT ANDA DI SINI
-        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbylsEKJB1AuPmvOiiaEjGODpSJsm1Vd0aqy0Gw-WIDKEWp44SZY-u3NSz5CmbfXUHvLng/exec"; 
+        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbydBeI32fSr7dJiXfVo8iWKmbIwMzEVG3kLaSjA0VUDsTZ4cW0SSucocpQGcrw5nvO06Q/exec"; 
 
-        // Database Murid untuk Dropdown Sesuai Kelas
+        // Database Murid untuk Dropdown (Silakan ganti dengan nama murid asli Bapak)
         const studentDB = {
-            "XI AT 1": [
-                "Pilih Nama Murid...", "Ade Ersza Maulana", "Ainun Barokah", "Andriyan Refano", "Anisa Febrianti", 
+            "XI AT 1": "Pilih Nama Murid...", "Ade Ersza Maulana", "Ainun Barokah", "Andriyan Refano", "Anisa Febrianti", 
                 "Azah Nurfaiqoh", "Azas Senja Darmawan", "Erwin Setiawan", "Fakhri Ramadhan", "Fatma Atania", 
                 "Firdausy", "Hikmah Zahra Aliffana", "Ibrahim Al Akbar", "Imam Nur Hidayat", "Iqbal Sabri Romadhon", 
                 "Ismi Fatikhatul Laila", "Karendra Rifqi Maulana", "Lika Meriana Sabili", "Mauliddya Zulfa Akmala", 
@@ -241,8 +240,7 @@
                 "Semrio Oktaviano", "Sibti Alfiana", "Sidiq Nur Ardianto", "Sri Mulyani Indrawati", "Syfa Ramadani", 
                 "Tiara Eliasari", "Tri Wahyu Setianingsih", "Ulul Janah", "Vario Mualim", "Zaenal Bahtiar"
             ],
-            "XI AT 2": [
-                "Pilih Nama Murid...", "Aditya Chesta Helga Pratama", "Aisyah Dwi Nuraini", "Anjar Banyu Imam Subekti", 
+            "Pilih Nama Murid...", "Aditya Chesta Helga Pratama", "Aisyah Dwi Nuraini", "Anjar Banyu Imam Subekti", 
                 "Annisa Meilani", "Bella Zahrina Aprila", "Caesar Alvirzi Setiawan", "Clarisa Chika Welby Alvaro", 
                 "Eti Nurlela", "Eza Fariza Ghofur", "Febrian Haerullah", "Frananda Valen Pramudya", "Hanum Nur Lathifah", 
                 "Icha Ganis Oktavia", "Ihsyan Samsul Ma`Arif", "Ipung Rizki Yanuar", "Irgi Ardianto", "Keza Nabila", 
@@ -262,7 +260,7 @@
                 "Tri Aksa Fergiansah", "Tuti Julianti", "Yusuf Ardiyansyah"
             ]
         };
-
+        
         // Database User Login
         const userDB = {
             // XI AT 1 (Prefix: a)
